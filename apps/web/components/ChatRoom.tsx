@@ -40,42 +40,113 @@ export default function ChatRoom({ token, username }: ChatRoomProps) {
     deleteCookie("chat_username");
     router.refresh();
   }
+
   function handleKnock(targetUserId?: number) {
     if (targetUserId) sendKnock(targetUserId);
   }
 
+  const isConnected = status === "open";
+  const isConnecting = status === "connecting";
+
   return (
     <>
-      <div className="flex flex-col h-dvh max-w-lg mx-auto w-full border-x border-border/30">
-        <ChatHeader
-          onlineCount={onlineCount}
-          notifications={notifications}
-          knockStatus={knockStatus}
-          knockCooldown={knockCooldown}
-          onLogout={handleLogout}
-          onAccept={acceptKnock}
-          onDecline={declineKnock}
-          onDismiss={dismissKnock}
-        />
-        {status !== "open" && (
-          <div className="text-[10px] text-center py-1.5 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 shrink-0">
-            {status === "connecting" && "Connecting…"}
-            {status === "closed" && "Disconnected — refresh to reconnect"}
-            {status === "error" && "Connection error"}
-          </div>
-        )}
-        <ChatWindow
-          messages={messages}
-          currentUsername={username}
-          onKnock={handleKnock}
-        />
-        <ChatInput
-          onSend={sendMessage}
-          disabled={status !== "open"}
-          searchGifs={searchGifs}
-          placeholder={status === "open" ? "Message…" : "Connecting…"}
+      {/* Ambient background */}
+      <div className="fixed inset-0 bg-background pointer-events-none">
+        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-accent/20 blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-[0.025] dark:opacity-[0.04]"
+          style={{
+            backgroundImage: `linear-gradient(var(--foreground) 1px, transparent 1px), linear-gradient(90deg, var(--foreground) 1px, transparent 1px)`,
+            backgroundSize: "36px 36px",
+          }}
         />
       </div>
+
+      {/* Main layout */}
+      <div className="relative flex flex-col h-dvh max-w-lg mx-auto w-full">
+
+        {/* Subtle side borders */}
+        <div className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-border/50 to-transparent" />
+        <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-border/50 to-transparent" />
+
+        {/* Header */}
+        <div className="shrink-0 bg-card/70 backdrop-blur-md border-b border-border/50">
+          <ChatHeader
+            onlineCount={onlineCount}
+            notifications={notifications}
+            knockStatus={knockStatus}
+            knockCooldown={knockCooldown}
+            onLogout={handleLogout}
+            onAccept={acceptKnock}
+            onDecline={declineKnock}
+            onDismiss={dismissKnock}
+          />
+        </div>
+
+        {/* Connection status banner */}
+        {status !== "open" && (
+          <div
+            className={`
+              shrink-0 flex items-center justify-center gap-2 py-2 px-4 text-[11px] font-mono tracking-wide
+              ${isConnecting
+                ? "bg-yellow-500/10 border-b border-yellow-500/20 text-yellow-600 dark:text-yellow-400"
+                : "bg-destructive/10 border-b border-destructive/20 text-destructive"
+              }
+            `}
+          >
+            {isConnecting && (
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-yellow-500 opacity-75 animate-ping" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-yellow-500" />
+              </span>
+            )}
+            {isConnecting && "Connecting to server…"}
+            {status === "closed" && "● Disconnected — refresh to reconnect"}
+            {status === "error" && "● Connection error — refresh to retry"}
+          </div>
+        )}
+
+        {/* Chat window — fills remaining space */}
+        <div className="flex-1 min-h-0 bg-background/40">
+          <ChatWindow
+            messages={messages}
+            currentUsername={username}
+            onKnock={handleKnock}
+          />
+        </div>
+
+        {/* Input area */}
+        <div className="shrink-0 bg-card/70 backdrop-blur-md border-t border-border/50 px-1 py-1">
+          {/* Online indicator strip */}
+          <div className="flex items-center gap-1.5 px-3 pb-1">
+            <span className="relative flex h-1.5 w-1.5">
+              {isConnected && (
+                <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />
+              )}
+              <span
+                className={`relative inline-flex h-1.5 w-1.5 rounded-full ${
+                  isConnected ? "bg-primary" : "bg-muted-foreground"
+                }`}
+              />
+            </span>
+            <span className="text-[10px] font-mono text-muted-foreground">
+              {isConnected
+                ? `${onlineCount} online · open.global.chat`
+                : "offline"}
+            </span>
+          </div>
+
+          <ChatInput
+            onSend={sendMessage}
+            disabled={!isConnected}
+            searchGifs={searchGifs}
+            placeholder={isConnected ? "Say something…" : "Connecting…"}
+          />
+        </div>
+      </div>
+
+      {/* Private room overlay */}
       {privateRoom && (
         <PrivateRoomScreen
           token={token}
