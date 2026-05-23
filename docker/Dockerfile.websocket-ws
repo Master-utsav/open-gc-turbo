@@ -76,10 +76,6 @@ ENV PATH="$PNPM_HOME:$PATH"
 
 RUN corepack enable
 
-# Real DATABASE_URL injected here at runtime only
-# Via: docker run -e DATABASE_URL=... or your orchestrator (K8s, Compose, etc.)
-# ARG also allows passing at build time if needed: docker build --build-arg DATABASE_URL=...
-
 COPY --from=builder /prod/websocket-ws ./
 
 EXPOSE 8081
