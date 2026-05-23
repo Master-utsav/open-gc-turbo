@@ -1,9 +1,11 @@
+/* eslint-disable turbo/no-undeclared-env-vars */
 "use server";
 
 import { cookies } from "next/headers";
 
 export async function authAction(username: string, password: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_HTTP_URL}/auth`, {
+  const baseUrl = process.env.API_URL ?? process.env.NEXT_PUBLIC_HTTP_URL;
+  const res = await fetch(`${baseUrl}/auth`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -19,7 +21,6 @@ export async function authAction(username: string, password: string) {
   const cookieStore = await cookies();
   cookieStore.set("chat_token", token, {
     httpOnly: false,
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7,
@@ -27,7 +28,6 @@ export async function authAction(username: string, password: string) {
   });
   cookieStore.set("chat_username", confirmedUsername, {
     httpOnly: false,
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7,
