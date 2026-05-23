@@ -21,14 +21,14 @@ export async function authAction(username: string, password: string) {
   const cookieStore = await cookies();
   cookieStore.set("chat_token", token, {
     httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7,
     path: "/",
   });
   cookieStore.set("chat_username", confirmedUsername, {
     httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7,
     path: "/",
