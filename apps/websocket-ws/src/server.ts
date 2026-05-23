@@ -78,7 +78,6 @@ async function closePrivateRoom(roomId: string, byUsername: string): Promise<voi
     if (c.privateRoomId === roomId) c.privateRoomId = null;
   }
 }
-
 // // ── Redis pub/sub router ──────────────────────────────────────────────────────
 
 async function setupRedisRouter(): Promise<void> {

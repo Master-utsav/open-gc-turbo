@@ -18,9 +18,9 @@ docker run -d --name http-express-open-gc-test-container --network open-gc-netwo
 # =========================================================
 # 5. WEBSOCKET
 # =========================================================
-docker run -d --name websocket-ws-open-gc-test-container --network open-gc-network --restart unless-stopped --env-file ./envs/websocket-ws.env -p 8081:8081 websocket-ws-open-gc-test-build:latest
+docker run -d --name open-gc-turbo-websocket-ws-container --network open-gc-network --restart unless-stopped --env-file /home/ubuntu/envs/websocket-ws.env -p 8081:8081 masterutsav/open-gc-turbo-websocket-ws:latest
 
 # =========================================================
 # 6. WEB (Next.js)
 # =========================================================
-docker run -d --name web-open-gc-test-container --network open-gc-network --restart unless-stopped --env-file ./envs/web.env -p 3000:3000 web-open-gc-test-build:latest
+docker run -d --name open-gc-turbo-web-container --network open-gc-network --restart unless-stopped --env-file /home/ubuntu/envs/web.env -p 3000:3000 masterutsav/open-gc-turbo-web:latest
