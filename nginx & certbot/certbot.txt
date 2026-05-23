@@ -1,0 +1,1 @@
+sudo certbot --nginx -d opengc.masterxcode.xyz -d opengc-api.masterxcode.xyz opengc-ws.masterxcode.xyz

@@ -97,6 +97,7 @@ async function setupRedisRouter(): Promise<void> {
 }
 
 // ── WS Server ─────────────────────────────────────────────────────────────────
+
 const wss = new WebSocketServer({ port: PORT });
 
 wss.on("connection", async (socket: WebSocket, req) => {
