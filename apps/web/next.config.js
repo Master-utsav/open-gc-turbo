@@ -10,7 +10,7 @@ const nextConfig = {
       }
     }
   },
-  allowedDevOrigins: ['*'],
+  allowedDevOrigins: ['44.197.184.237'],
   output: 'standalone',
   images: {
     remotePatterns: [
