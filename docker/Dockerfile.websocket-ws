@@ -1,0 +1,87 @@
+# =========================================================
+# BASE
+# =========================================================
+FROM node:22-alpine AS base
+
+RUN apk add --no-cache libc6-compat
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN corepack enable
+
+# =========================================================
+# PRUNER
+# =========================================================
+FROM base AS pruner
+
+WORKDIR /app
+
+COPY . .
+
+RUN pnpm dlx turbo prune websocket-ws --docker
+
+# =========================================================
+# INSTALLER
+# =========================================================
+FROM base AS installer
+
+WORKDIR /app
+
+COPY --from=pruner /app/out/json/ .
+
+RUN pnpm install --frozen-lockfile
+
+# =========================================================
+# BUILDER
+# =========================================================
+FROM base AS builder
+
+WORKDIR /app
+
+COPY --from=installer /app/node_modules ./node_modules
+COPY --from=installer /app/ .
+COPY --from=pruner /app/out/full/ .
+
+# =========================================================
+# PRISMA GENERATE
+# =========================================================
+RUN pnpm run db:generate
+
+# =========================================================
+# BUILD APP + DEPENDENCIES
+# =========================================================
+RUN pnpm dlx turbo run build --filter=websocket-ws...
+
+# =========================================================
+# DEPLOY MINIMAL APP
+# =========================================================
+RUN pnpm deploy \
+    --filter=websocket-ws \
+    --prod \
+    /prod/websocket-ws
+
+# =========================================================
+# RUNNER
+# =========================================================
+FROM node:22-alpine AS runner
+
+WORKDIR /app
+
+RUN apk add --no-cache libc6-compat
+
+ENV NODE_ENV=production
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN corepack enable
+
+# Real DATABASE_URL injected here at runtime only
+# Via: docker run -e DATABASE_URL=... or your orchestrator (K8s, Compose, etc.)
+# ARG also allows passing at build time if needed: docker build --build-arg DATABASE_URL=...
+
+COPY --from=builder /prod/websocket-ws ./
+
+EXPOSE 8081
+
+CMD ["node", "./dist/server.js"]

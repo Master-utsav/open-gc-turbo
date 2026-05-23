@@ -1,0 +1,42 @@
+{
+  "name": "turbo_repo_deploy_ec2",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+
+  "engines": {
+    "node": ">=20"
+  },
+
+  "scripts": {
+    "build": "turbo run build",
+
+    "dev": "turbo run dev --parallel",
+
+    "lint": "turbo run lint",
+
+    "check-types": "turbo run check-types",
+
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+
+    "db:generate": "pnpm --filter @repo/db prisma generate",
+
+    "db:migrate": "pnpm --filter @repo/db prisma migrate deploy",
+
+    "start:web": "pnpm --filter web start",
+
+    "start:http-express": "pnpm --filter http-express start",
+
+    "start:websocket-ws": "pnpm --filter websocket-ws start"
+  },
+
+  "devDependencies": {
+    "prettier": "^3.7.4",
+    "turbo": "^2.9.12",
+    "typescript": "5.9.2"
+  },
+
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

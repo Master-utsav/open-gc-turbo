@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  username       String          @unique
+  password       String
+  createdAt      DateTime        @default(now())
+  globalMessages GlobalMessage[]
+}
+
+enum GlobalMessageType {
+  TEXT
+  GIF
+}
+
+model GlobalMessage {
+  id        Int               @id @default(autoincrement())
+  content   String
+  type      GlobalMessageType @default(TEXT)
+  createdAt DateTime          @default(now())
+  author    User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  Int
+
+  @@index([createdAt])
+}
+
+// Private chat is 100% Redis — no DB models needed.
+// Rooms are ephemeral: created on accept, destroyed when either user leaves.
