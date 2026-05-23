@@ -53,12 +53,17 @@ jobs:
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: 22
           script: |
+            export PATH=$PATH:/usr/bin
+
             IMAGE_NAME="masterutsav/open-gc-turbo-http-express"
             CONTAINER_NAME="open-gc-turbo-http-express-container"
             NETWORK_NAME="open-gc-network"
 
             set -e
 
+            # Login to DockerHub before pulling private image
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            
             # Create network if it doesn't exist
             docker network inspect $NETWORK_NAME > /dev/null 2>&1 || \
               docker network create $NETWORK_NAME
