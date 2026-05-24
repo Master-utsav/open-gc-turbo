@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useState, useRef, KeyboardEvent } from "react";
 import { cn } from "../../lib/utils";
+import { motion, AnimatePresence } from "motion/react";
 
 interface GifResult {
   url: string;
@@ -16,7 +17,6 @@ interface ChatInputProps {
   placeholder?: string;
   searchGifs: (x: string) => Promise<GifResult[] | []>;
 }
-
 
 const ChatInput = ({
   onSend,
@@ -77,67 +77,79 @@ const ChatInput = ({
   }
 
   return (
-    <div className="relative">
+    <div className="relative font-sans">
       {/* GIF picker panel */}
-      {showGif && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 mx-4 bg-background border border-border/60 rounded-2xl shadow-lg overflow-hidden z-20">
-          <div className="p-2 border-b border-border/40">
-            <input
-              autoFocus
-              value={gifQuery}
-              onChange={handleGifSearch}
-              placeholder="Search GIFs…"
-              className="w-full bg-muted rounded-xl px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/60"
-            />
-          </div>
-          <div className="h-48 overflow-y-auto p-2">
-            {gifLoading && (
-              <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
-                Searching…
-              </div>
-            )}
-            {!gifLoading && gifs.length === 0 && gifQuery && (
-              <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
-                No GIFs found
-              </div>
-            )}
-            {!gifLoading && gifs.length === 0 && !gifQuery && (
-              <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
-                Search for a GIF to send
-              </div>
-            )}
-            <div className="grid grid-cols-3 gap-1.5">
-              {gifs.map((gif, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => sendGif(gif)}
-                  className="aspect-video overflow-hidden rounded-lg hover:ring-2 hover:ring-primary transition-all"
-                >
-                  <img
-                    src={gif.preview}
-                    alt={gif.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </button>
-              ))}
+      <AnimatePresence>
+        {showGif && (
+          <motion.div
+            initial={{ opacity: 0, y: 15, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute bottom-full left-0 right-0 mb-2 mx-4 bg-card border border-border/60 rounded-2xl shadow-xl overflow-hidden z-20"
+          >
+            <div className="p-2 border-b border-border/40 bg-card/50 backdrop-blur-md">
+              <input
+                autoFocus
+                value={gifQuery}
+                onChange={handleGifSearch}
+                placeholder="Search GIFs…"
+                className="w-full bg-muted/60 border border-border/40 rounded-xl px-3.5 py-2 text-sm outline-none placeholder:text-muted-foreground/50 text-foreground focus:border-primary/40 transition-colors"
+              />
             </div>
-          </div>
-        </div>
-      )}
+            <div className="h-48 overflow-y-auto p-2">
+              {gifLoading && (
+                <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
+                  Searching…
+                </div>
+              )}
+              {!gifLoading && gifs.length === 0 && gifQuery && (
+                <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
+                  No GIFs found
+                </div>
+              )}
+              {!gifLoading && gifs.length === 0 && !gifQuery && (
+                <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
+                  Search for a GIF to send
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-1.5">
+                {gifs.map((gif, i) => (
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    key={i}
+                    type="button"
+                    onClick={() => sendGif(gif)}
+                    className="aspect-video overflow-hidden rounded-lg hover:ring-2 hover:ring-primary transition-all cursor-pointer bg-muted"
+                  >
+                    <img
+                      src={gif.preview}
+                      alt={gif.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Input bar */}
       <div className="flex items-end gap-2 px-4 py-3 border-t border-border/40 bg-background">
         {/* GIF toggle button */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           type="button"
           onClick={() => setShowGif((v) => !v)}
           disabled={disabled}
           aria-label="Send GIF"
           className={cn(
-            "w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold tracking-tight",
-            "border border-border/60 transition-all hover:scale-105 active:scale-95",
+            "w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold tracking-tight cursor-pointer shadow-sm",
+            "border border-border/60 transition-all",
             showGif
               ? "bg-primary text-primary-foreground border-primary"
               : "bg-muted text-muted-foreground hover:text-foreground",
@@ -145,7 +157,7 @@ const ChatInput = ({
           )}
         >
           GIF
-        </button>
+        </motion.button>
 
         <textarea
           ref={textareaRef}
@@ -157,21 +169,23 @@ const ChatInput = ({
           placeholder={placeholder}
           className={cn(
             "flex-1 resize-none bg-muted rounded-2xl px-4 py-2.5 text-sm leading-snug",
-            "outline-none focus:ring-2 focus:ring-primary/40 transition-all",
-            "placeholder:text-muted-foreground/60 max-h-30 overflow-y-auto",
+            "outline-none border border-transparent focus:border-primary/20 focus:ring-2 focus:ring-primary/10 transition-all",
+            "placeholder:text-muted-foreground/60 max-h-30 overflow-y-auto text-foreground",
             "disabled:opacity-50 disabled:cursor-not-allowed"
           )}
         />
 
         {/* Send button */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           type="button"
           onClick={submit}
           disabled={disabled || !value.trim()}
           aria-label="Send message"
           className={cn(
-            "w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0",
-            "transition-all hover:scale-105 active:scale-95",
+            "w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0 cursor-pointer shadow-md shadow-primary/10",
+            "transition-all",
             "disabled:opacity-40 disabled:pointer-events-none"
           )}
         >
@@ -181,7 +195,7 @@ const ChatInput = ({
             <line x1="22" y1="2" x2="11" y2="13" />
             <polygon points="22 2 15 22 11 13 2 9 22 2" />
           </svg>
-        </button>
+        </motion.button>
       </div>
     </div>
   );

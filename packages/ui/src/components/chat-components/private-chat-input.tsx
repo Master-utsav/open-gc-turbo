@@ -4,6 +4,7 @@ import * as React from "react";
 import { useState, useRef, KeyboardEvent } from "react";
 import { cn } from "../../lib/utils";
 import { Input } from "../input";
+import { motion, AnimatePresence } from "motion/react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -146,68 +147,98 @@ function PrivateChatInput({
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="relative">
-
-      {/* GIF panel */}
-      {panel === "gif" && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 mx-4 bg-background border border-border/60 rounded-2xl shadow-lg overflow-hidden z-20">
-          <div className="p-2 border-b border-border/40">
-            <input
-              autoFocus
-              value={gifQuery}
-              onChange={handleGifSearch}
-              placeholder="Search GIFs…"
-              className="w-full bg-muted rounded-xl px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/60"
-            />
-          </div>
-          <div className="h-48 overflow-y-auto p-2">
-            {gifLoading && (
-              <p className="text-xs text-muted-foreground text-center mt-16">Searching…</p>
-            )}
-            {!gifLoading && gifs.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center mt-16">
-                {gifQuery ? "No GIFs found" : "Search for a GIF to send"}
-              </p>
-            )}
-            <div className="grid grid-cols-3 gap-1.5">
-              {gifs.map((gif, i) => (
-                <button key={i} type="button" onClick={() => sendGif(gif)}
-                  className="aspect-video overflow-hidden rounded-lg hover:ring-2 hover:ring-primary transition-all">
-                  <img src={gif.preview} alt={gif.title} className="w-full h-full object-cover" loading="lazy" />
-                </button>
-              ))}
+    <div className="relative font-sans">
+      <AnimatePresence mode="wait">
+        {/* GIF panel */}
+        {panel === "gif" && (
+          <motion.div
+            key="gif-picker"
+            initial={{ opacity: 0, y: 15, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute bottom-full left-0 right-0 mb-2 mx-4 bg-card border border-border/60 rounded-2xl shadow-xl overflow-hidden z-20"
+          >
+            <div className="p-2 border-b border-border/40 bg-card/50 backdrop-blur-md">
+              <input
+                autoFocus
+                value={gifQuery}
+                onChange={handleGifSearch}
+                placeholder="Search GIFs…"
+                className="w-full bg-muted/60 border border-border/40 rounded-xl px-3.5 py-2 text-sm outline-none placeholder:text-muted-foreground/50 text-foreground focus:border-primary/40 transition-colors"
+              />
             </div>
-          </div>
-        </div>
-      )}
+            <div className="h-48 overflow-y-auto p-2">
+              {gifLoading && (
+                <p className="text-xs text-muted-foreground text-center mt-16">Searching…</p>
+              )}
+              {!gifLoading && gifs.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center mt-16">
+                  {gifQuery ? "No GIFs found" : "Search for a GIF to send"}
+                </p>
+              )}
+              <div className="grid grid-cols-3 gap-1.5">
+                {gifs.map((gif, i) => (
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    key={i}
+                    type="button"
+                    onClick={() => sendGif(gif)}
+                    className="aspect-video overflow-hidden rounded-lg hover:ring-2 hover:ring-primary transition-all cursor-pointer bg-muted"
+                  >
+                    <img src={gif.preview} alt={gif.title} className="w-full h-full object-cover" loading="lazy" />
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
-      {/* Media preview panel */}
-      {panel === "media" && mediaPreview && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 mx-4 bg-background border border-border/60 rounded-2xl shadow-lg overflow-hidden z-20 p-4">
-          <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-            {mediaPreview.kind === "video" ? "10s Video" : "Picture"} · disappears after viewing
-          </p>
+        {/* Media preview panel */}
+        {panel === "media" && mediaPreview && (
+          <motion.div
+            key="media-preview"
+            initial={{ opacity: 0, y: 15, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute bottom-full left-0 right-0 mb-2 mx-4 bg-card border border-border/60 rounded-2xl shadow-xl overflow-hidden z-20 p-4"
+          >
+            <p className="text-[10px] font-bold text-muted-foreground mb-3 uppercase tracking-widest">
+              {mediaPreview.kind === "video" ? "10s Video" : "Picture"} · disappears after viewing
+            </p>
 
-          <div className="rounded-xl overflow-hidden bg-muted mb-3 max-h-48 flex items-center justify-center">
-            {mediaPreview.kind === "picture" ? (
-              <img src={mediaPreview.url} alt="preview" className="max-h-48 object-contain w-full" />
-            ) : (
-              <video src={mediaPreview.url} controls className="max-h-48 w-full" />
-            )}
-          </div>
+            <div className="rounded-xl overflow-hidden bg-muted mb-3 max-h-48 flex items-center justify-center border border-border/40">
+              {mediaPreview.kind === "picture" ? (
+                <img src={mediaPreview.url} alt="preview" className="max-h-48 object-contain w-full" />
+              ) : (
+                <video src={mediaPreview.url} controls className="max-h-48 w-full" />
+              )}
+            </div>
 
-          <div className="flex gap-2">
-            <button onClick={cancelMedia}
-              className="flex-1 h-8 rounded-xl border border-border/60 text-xs font-medium text-muted-foreground hover:bg-muted transition-all">
-              Cancel
-            </button>
-            <button onClick={confirmSendMedia} disabled={uploading}
-              className="flex-1 h-8 rounded-xl bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 active:scale-95 transition-all disabled:opacity-50">
-              {uploading ? "Sending…" : "Send"}
-            </button>
-          </div>
-        </div>
-      )}
+            <div className="flex gap-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={cancelMedia}
+                className="flex-1 h-9 rounded-xl border border-border/60 text-xs font-semibold text-muted-foreground hover:bg-muted transition-all cursor-pointer"
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={confirmSendMedia}
+                disabled={uploading}
+                className="flex-1 h-9 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer shadow-md shadow-primary/10"
+              >
+                {uploading ? "Sending…" : "Send"}
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Hidden native file input — NOT shadcn Input which can't be ref'd for .click() */}
       <Input
@@ -221,33 +252,42 @@ function PrivateChatInput({
       {/* Input bar */}
       <div className="flex items-end gap-2 px-4 py-3 border-t border-border/40 bg-background">
 
-        <button type="button" onClick={() => setPanel(panel === "gif" ? "none" : "gif")}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          type="button" 
+          onClick={() => setPanel(panel === "gif" ? "none" : "gif")}
           disabled={disabled}
           className={cn(
             "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
-            "text-[10px] font-bold tracking-tight border transition-all hover:scale-105 active:scale-95",
+            "text-[10px] font-bold tracking-tight border transition-all cursor-pointer shadow-sm",
             panel === "gif"
               ? "bg-primary text-primary-foreground border-primary"
               : "bg-muted text-muted-foreground border-border/60 hover:text-foreground",
             "disabled:opacity-40 disabled:pointer-events-none"
           )}>
           GIF
-        </button>
+        </motion.button>
 
-        <button type="button" onClick={openFilePicker} disabled={disabled}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          type="button" 
+          onClick={openFilePicker} 
+          disabled={disabled}
           aria-label="Send photo or video"
           className={cn(
             "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
             "bg-muted border border-border/60 text-muted-foreground",
-            "hover:text-foreground hover:scale-105 active:scale-95 transition-all",
+            "hover:text-foreground transition-all cursor-pointer shadow-sm",
             "disabled:opacity-40 disabled:pointer-events-none"
           )}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <rect x="3" y="3" width="18" height="18" rx="2"/>
             <circle cx="8.5" cy="8.5" r="1.5"/>
             <polyline points="21 15 16 10 5 21"/>
           </svg>
-        </button>
+        </motion.button>
 
         <textarea
           ref={textareaRef}
@@ -259,17 +299,22 @@ function PrivateChatInput({
           placeholder={placeholder}
           className={cn(
             "flex-1 resize-none bg-muted rounded-2xl px-4 py-2.5 text-sm leading-snug",
-            "outline-none focus:ring-2 focus:ring-primary/40 transition-all",
-            "placeholder:text-muted-foreground/60 max-h-30 overflow-y-auto",
+            "outline-none border border-transparent focus:border-primary/20 focus:ring-2 focus:ring-primary/10 transition-all",
+            "placeholder:text-muted-foreground/60 max-h-30 overflow-y-auto text-foreground",
             "disabled:opacity-50 disabled:cursor-not-allowed"
           )}
         />
 
-        <button type="button" onClick={submit} disabled={disabled || !value.trim()}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          type="button" 
+          onClick={submit} 
+          disabled={disabled || !value.trim()}
           aria-label="Send message"
           className={cn(
-            "w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0",
-            "transition-all hover:scale-105 active:scale-95",
+            "w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0 cursor-pointer shadow-md shadow-primary/10",
+            "transition-all",
             "disabled:opacity-40 disabled:pointer-events-none"
           )}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -277,7 +322,7 @@ function PrivateChatInput({
             <line x1="22" y1="2" x2="11" y2="13"/>
             <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
-        </button>
+        </motion.button>
       </div>
     </div>
   );

@@ -36,7 +36,7 @@ const ChatWindow = ({ messages, currentUsername, onKnock }: ChatWindowProps) => 
   }
 
   return (
-    <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-1.5 scroll-smooth">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden py-4 flex flex-col gap-1.5 scroll-smooth">
       {messages.map((msg:ChatMessage, i) => {
         const prevMsg = messages[i - 1];
         // Collapse avatar/name for consecutive messages from same user

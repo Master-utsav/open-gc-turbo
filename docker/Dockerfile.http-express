@@ -1,6 +1,4 @@
-# =========================================================
 # BASE
-# =========================================================
 FROM node:22-alpine AS base
 
 RUN apk add --no-cache libc6-compat
@@ -10,9 +8,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 
 RUN corepack enable
 
-# =========================================================
 # PRUNER
-# =========================================================
 FROM base AS pruner
 
 WORKDIR /app
@@ -21,9 +17,7 @@ COPY . .
 
 RUN pnpm dlx turbo prune http-express --docker
 
-# =========================================================
 # INSTALLER
-# =========================================================
 FROM base AS installer
 
 WORKDIR /app
@@ -32,9 +26,8 @@ COPY --from=pruner /app/out/json/ .
 
 RUN pnpm install --frozen-lockfile
 
-# =========================================================
+
 # BUILDER
-# =========================================================
 FROM base AS builder
 
 WORKDIR /app
@@ -43,29 +36,16 @@ COPY --from=installer /app/node_modules ./node_modules
 COPY --from=installer /app/ .
 COPY --from=pruner /app/out/full/ .
 
-# =========================================================
-# PRISMA GENERATE
-# =========================================================
 RUN pnpm run db:generate
-
-# =========================================================
-# BUILD APP + DEPENDENCIES
-# =========================================================
 RUN pnpm dlx turbo run build --filter=http-express...
-
-# =========================================================
-# DEPLOY MINIMAL APP
-# =========================================================
 RUN pnpm deploy \
     --filter=http-express \
     --prod \
     /prod/http-express
 
-# =========================================================
+    
 # RUNNER
-# =========================================================
 FROM node:22-alpine AS runner
-
 WORKDIR /app
 
 RUN apk add --no-cache libc6-compat

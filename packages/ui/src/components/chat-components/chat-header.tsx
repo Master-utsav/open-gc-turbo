@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "../../lib/utils";
+import { motion, AnimatePresence } from "motion/react";
 
 export interface KnockNotificationInterface {
   id:           string;
@@ -33,8 +34,31 @@ export function ChatHeader({
   onDismiss,
 }: ChatHeaderProps) {
   const [panelOpen, setPanelOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   const unreadCount = notifications.length;
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const currentTheme = savedTheme || (document.documentElement.classList.contains("dark") ? "dark" : "light");
+    setTheme(currentTheme);
+    if (currentTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+    if (nextTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
 
   return (
     <div className="relative shrink-0">
@@ -46,17 +70,46 @@ export function ChatHeader({
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-foreground leading-none">Global Chat</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{onlineCount} online</p>
+            <p className="text-sm font-semibold text-foreground leading-none font-sans">Global Chat</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">{onlineCount} online</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          {/* ── Theme Toggle Switch ───────────────────────────────────── */}
+          <button
+            onClick={toggleTheme}
+            className="relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+            aria-label="Toggle theme"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={theme}
+                initial={{ y: -8, opacity: 0, rotate: -45 }}
+                animate={{ y: 0, opacity: 1, rotate: 0 }}
+                exit={{ y: 8, opacity: 0, rotate: 45 }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center justify-center"
+              >
+                {theme === "dark" ? (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                  </svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                  </svg>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </button>
+
           {/* ── Notification bell ──────────────────────────────────────── */}
           <button
             onClick={() => setPanelOpen(v => !v)}
             className={cn(
-              "relative w-8 h-8 rounded-full flex items-center justify-center transition-all",
+              "relative w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer",
               panelOpen
                 ? "bg-primary/10 text-primary"
                 : "hover:bg-muted text-muted-foreground hover:text-foreground",
@@ -64,7 +117,7 @@ export function ChatHeader({
             )}
             aria-label={`Notifications (${unreadCount})`}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
@@ -80,7 +133,7 @@ export function ChatHeader({
           {/* ── Leave / Logout ─────────────────────────────────────────── */}
           <button
             onClick={onLogout}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted cursor-pointer"
           >
             Leave
           </button>
@@ -89,60 +142,68 @@ export function ChatHeader({
 
       {/* ── Knock status bar (you sent a knock) ─────────────────────────── */}
       {knockStatus === "sent" && knockCooldown > 0 && (
-        <div className="px-4 py-1.5 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
-          <p className="text-[10px] text-primary">Knock sent — waiting for reply…</p>
+        <div className="px-4 py-1.5 bg-primary/10 border-b border-primary/20 flex items-center justify-between">
+          <p className="text-[10px] font-medium text-primary uppercase tracking-wider">Knock sent — waiting for reply…</p>
           <span className="text-[10px] font-mono text-primary/70">{knockCooldown}s</span>
         </div>
       )}
       {knockStatus === "declined" && (
         <div
           onClick={onDismiss}
-          className="px-4 py-1.5 bg-destructive/5 border-b border-destructive/10 flex items-center justify-between cursor-pointer"
+          className="px-4 py-1.5 bg-destructive/10 border-b border-destructive/20 flex items-center justify-between cursor-pointer"
         >
-          <p className="text-[10px] text-destructive">Your knock was declined</p>
-          <span className="text-[10px] text-destructive/60">tap to dismiss</span>
+          <p className="text-[10px] font-medium text-destructive uppercase tracking-wider">Your knock was declined</p>
+          <span className="text-[10px] text-destructive/60 uppercase font-mono">tap to dismiss</span>
         </div>
       )}
 
       {/* ── Notification panel ───────────────────────────────────────────── */}
-      {panelOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-20"
-            onClick={() => setPanelOpen(false)}
-          />
+      <AnimatePresence>
+        {panelOpen && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 z-20"
+              onClick={() => setPanelOpen(false)}
+            />
 
-          {/* Panel */}
-          <div className="absolute top-full right-3 mt-2 w-80 bg-background border border-border/60 rounded-2xl shadow-xl z-30 overflow-hidden">
-            <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-              <p className="text-xs font-semibold text-foreground">Private room requests</p>
-              {unreadCount > 0 && (
-                <span className="text-[10px] text-muted-foreground">{unreadCount} pending</span>
-              )}
-            </div>
+            {/* Panel */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -8 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="absolute top-full right-3 mt-2 w-80 bg-card border border-border/80 rounded-2xl shadow-xl z-30 overflow-hidden"
+            >
+              <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between bg-card/50 backdrop-blur-md">
+                <p className="text-xs font-semibold text-foreground">Private room requests</p>
+                {unreadCount > 0 && (
+                  <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{unreadCount} pending</span>
+                )}
+              </div>
 
-            <div className="max-h-80 overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="px-4 py-8 text-center text-xs text-muted-foreground/50">
-                  No pending requests
-                </div>
-              ) : (
-                <div className="divide-y divide-border/30">
-                  {notifications.map(notif => (
-                    <NotificationRow
-                      key={notif.id}
-                      notif={notif}
-                      onAccept={() => { onAccept(notif); setPanelOpen(false); }}
-                      onDecline={() => onDecline(notif)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
+              <div className="max-h-80 overflow-y-auto bg-card">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-xs text-muted-foreground/50 font-sans">
+                    No pending requests
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border/30">
+                    {notifications.map(notif => (
+                      <NotificationRow
+                        key={notif.id}
+                        notif={notif}
+                        onAccept={() => { onAccept(notif); setPanelOpen(false); }}
+                        onDecline={() => onDecline(notif)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -161,10 +222,10 @@ function NotificationRow({
   const secondsLeft = Math.max(0, Math.ceil((notif.expiresAt - Date.now()) / 1000));
 
   return (
-    <div className="px-4 py-3 flex items-center gap-3">
+    <div className="px-4 py-3 flex items-center gap-3 hover:bg-muted/30 transition-colors">
       {/* Avatar */}
       <div
-        className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+        className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-sm"
         style={{ backgroundColor: avatarHue(notif.fromUsername) }}
       >
         {notif.fromUsername.charAt(0).toUpperCase()}
@@ -174,14 +235,14 @@ function NotificationRow({
         <p className="text-sm font-medium text-foreground truncate">{notif.fromUsername}</p>
         <p className="text-[10px] text-muted-foreground flex items-center gap-1">
           wants to chat privately
-          <span className="font-mono text-primary/60">· {secondsLeft}s</span>
+          <span className="font-mono text-primary/80 font-semibold">· {secondsLeft}s</span>
         </p>
       </div>
 
       <div className="flex gap-1.5 shrink-0">
         <button
           onClick={onDecline}
-          className="w-7 h-7 rounded-full border border-border/60 flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-all"
+          className="w-7 h-7 rounded-full border border-border/60 flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-all cursor-pointer bg-background"
           aria-label="Decline"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -190,7 +251,7 @@ function NotificationRow({
         </button>
         <button
           onClick={onAccept}
-          className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:opacity-90 active:scale-95 transition-all"
+          className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-sm"
           aria-label="Accept"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
